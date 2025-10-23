@@ -7,25 +7,23 @@ Base = declarative_base()
 
 
 class User(Base):
-    """User table - stores reviewers"""
     __tablename__ = 'users'
     
     user_id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Relationship
-    reviews = relationship('Review', back_populates='user', cascade='all, delete-orphan')
+
+    reviews = relationship('Review', back_populates='user')
     
     def __repr__(self):
         return f"<User(id={self.user_id}, username='{self.username}')>"
 
 
 class Review(Base):
-    """Review table - stores all media reviews"""
     __tablename__ = 'reviews'
     
     review_id = Column(Integer, primary_key=True, autoincrement=True)
+    
     user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False, index=True)
     username = Column(String(50), nullable=False, index=True)
     title = Column(String(255), nullable=False, index=True)
@@ -35,10 +33,10 @@ class Review(Base):
     is_reviewed = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
-    # Relationship
+
     user = relationship('User', back_populates='reviews')
     
-    # Constraints
+    # Constraints upon the table level argument 
     __table_args__ = (
         CheckConstraint('rating IS NULL OR (rating >= 1.0 AND rating <= 5.0)', 
                        name='check_rating_range'),

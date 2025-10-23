@@ -1,4 +1,3 @@
-"""Main CLI interface"""
 import threading
 from tabulate import tabulate
 from src.database.manager import DatabaseManager
@@ -10,32 +9,34 @@ from src.cache.redis_cache import cache
 
 
 class MediaReviewCLI:
-    """CLI for Media Review System"""
-    
+
     def __init__(self):
         self.db = DatabaseManager()
         self.db.create_tables()
         self.review_service = ReviewService(self.db)
         self.user_service = UserService(self.db)
         
-        # Initialize recommendation service (with error handling)
         print("\n🔄 Loading recommendation models...")
         try:
             self.recommendation_service = RecommendationService()
-            print("✅ Recommendation system ready\n")
+            print("Recommendation system ready\n")
+            
         except Exception as e:
-            print(f"⚠️  Recommendation system not available: {e}")
-            print("   (You can still use all other features)\n")
+            print(f"Recommendation system not available: {e}")
             self.recommendation_service = None
     
+    
+    
+# HELPER FUNCTIONS
+
+# to print header
     def print_header(self, text):
-        """Print formatted header"""
         print("\n" + "=" * 70)
         print(f"  {text}")
         print("=" * 70)
     
+# to print media type
     def media_type_selector(self):
-        """Helper to select media type"""
         print("\nSelect media type:")
         for i, media_type in enumerate(MediaFactory.get_all_types(), 1):
             icon = MediaFactory.get_icon(media_type)
@@ -45,10 +46,8 @@ class MediaReviewCLI:
         media_map = {'1': 'movie', '2': 'song', '3': 'webshow'}
         return media_map.get(choice)
     
-    # ==================== MAIN MENU ====================
-    
+# MAIN MENU 
     def main_menu(self):
-        """Main entry point"""
         try:
             while True:
                 self.print_header("📺 MEDIA REVIEW SYSTEM")
@@ -79,14 +78,11 @@ class MediaReviewCLI:
         finally:
             self.db.close_session()
     
-    # ==================== OPTION 1: Show All Reviewers ====================
+# OPTION 1: Show All Reviewers 
     
     def show_all_reviewers(self):
-        """Show all users from database"""
         self.print_header("👥 ALL REVIEWERS")
-        
         users = self.db.get_all_users()
-        
         if not users:
             print("⚠️  No reviewers found in the database!")
         else:
@@ -99,14 +95,12 @@ class MediaReviewCLI:
                           tablefmt='grid'))
             print(f"\nTotal Reviewers: {len(users)}")
     
-    # ==================== OPTION 2: Add New Reviewer ====================
+# OPTION 2: Add New Reviewer 
     
     def add_new_reviewer(self):
-        """Create new user"""
-        self.print_header("➕ ADD NEW REVIEWER")
-        
+        self.print_header("➕ ADD NEW REVIEWER")    # remember this technique its cool
         username = input("Enter username: ").strip()
-        
+
         if not username:
             print("❌ Username cannot be empty!")
             return
@@ -118,7 +112,7 @@ class MediaReviewCLI:
         else:
             print(f"⚠️  {message}")
     
-    # ==================== OPTION 3: Review Menu ====================
+# OPTION 3: Review Menu 
     
     def review_menu(self):
         """Opens Review & Recommendations submenu"""
@@ -154,7 +148,7 @@ class MediaReviewCLI:
             if choice != '7':
                 input("\nPress Enter to continue...")
     
-    # ==================== REVIEW SUBMENU OPTIONS ====================
+# REVIEW SUBMENU OPTIONS 
     
     def view_all_media(self):
         """Show all media grouped by type"""
@@ -189,7 +183,7 @@ class MediaReviewCLI:
         """Add new review with multithreading support"""
         self.print_header("➕ ADD NEW REVIEW")
         
-        # Step 1: Username
+    # Step 1: Username
         username = input("Enter your username: ").strip()
         if not username:
             print("❌ Username cannot be empty!")
@@ -204,15 +198,15 @@ class MediaReviewCLI:
             else:
                 return
         
-        # Step 2: Media Type (using Factory Pattern)
+    # Step 2: Media Type (using Factory Pattern)
         media_type = self.media_type_selector()
         if not media_type:
             print("❌ Invalid media type!")
             return
         
-        # Create media object using Factory Pattern
+    # Create media object using Factory Pattern
         try:
-            # Step 3: Title
+        # Step 3: Title
             title = input(f"\nEnter {media_type} title: ").strip()
             if not title:
                 print("❌ Title cannot be empty!")
@@ -221,19 +215,19 @@ class MediaReviewCLI:
             media = MediaFactory.create_media(media_type, title)
             print(f"\n{media.get_display_icon()} Creating review for: {title}")
             
-            # Step 4: Rating
+        # Step 4: Rating
             rating = float(input("Enter rating (1.0 - 5.0): ").strip())
             if rating < 1.0 or rating > 5.0:
                 print("❌ Rating must be between 1.0 and 5.0!")
                 return
             
-            # Step 5: Review Text (Optional)
+        # Step 5: Review Text (Optional)
             review_text = input("Enter review text (press Enter to skip): ").strip()
             
-            # Add review using threaded service
+        # Add review using threaded service
             print("\n⏳ Submitting review...")
             
-            # Simulate concurrent submission with threading
+        # Simulate concurrent submission with threading
             def submit_review():
                 success, message = self.review_service.add_review_threaded(
                     username, title, media_type, rating, review_text
@@ -254,19 +248,19 @@ class MediaReviewCLI:
         """Search by title (DB-centric)"""
         self.print_header("🔍 SEARCH BY TITLE")
         
-        # Select media type
+    # Select media type
         media_type = self.media_type_selector()
         if not media_type:
             print("❌ Invalid media type!")
             return
         
-        # Get title to search
+    # Get title to search
         title = input(f"\nEnter {media_type} title to search: ").strip()
         if not title:
             print("❌ Search term cannot be empty!")
             return
         
-        # DB-centric search (ILIKE query)
+    # DB-centric search (ILIKE query)
         results = self.db.search_by_title(title, media_type)
         
         if not results:
@@ -288,17 +282,17 @@ class MediaReviewCLI:
         """Get top-rated (DB-centric with caching)"""
         self.print_header("⭐ GET TOP RATED")
         
-        # Select media type
+    # Select media type
         media_type = self.media_type_selector()
         if not media_type:
             print("❌ Invalid media type!")
             return
         
-        # Use cached service
+    # Use cached service
         results = self.review_service.get_top_rated_cached(media_type, limit=5)
         
         if not results:
-            print(f"\n⚠️  No rated {media_type}s found!")
+            print(f"\n  No rated {media_type}s found!")
         else:
             icon = MediaFactory.get_icon(media_type)
             print(f"\n{icon} Top {len(results)} {media_type.capitalize()}(s):\n")
@@ -324,7 +318,7 @@ class MediaReviewCLI:
             print("❌ Username cannot be empty!")
             return
         
-        # Get user's highest-rated media (DB-centric)
+    # Get user's highest-rated media (DB-centric)
         highest_rated = self.db.get_highest_rated_by_user(username)
         
         if not highest_rated:
@@ -336,9 +330,9 @@ class MediaReviewCLI:
         print(f"   Title: {highest_rated.title}")
         print(f"   Rating: {highest_rated.rating:.1f}⭐")
         
-        # Get recommendations using ML model
-        print(f"\n🤖 Generating AI recommendations based on '{highest_rated.title}'...")
-        
+
+        print(f"\n Recommendations based on '{highest_rated.title}'...")
+    
         recommendations = self.recommendation_service.recommend(
             highest_rated.media_type,
             highest_rated.title,
@@ -369,10 +363,9 @@ class MediaReviewCLI:
         else:
             print(f"⚠️  {message}")
     
-    # ==================== OPTION 4: Statistics ====================
+# OPTION 4: Statistics 
     
     def show_statistics(self):
-        """Show database statistics"""
         self.print_header("📊 DATABASE STATISTICS")
         
         stats = self.db.get_stats()

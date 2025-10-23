@@ -1,4 +1,3 @@
-"""Database manager for handling all database operations"""
 from contextlib import contextmanager
 from sqlalchemy import create_engine, desc, func
 from sqlalchemy.orm import sessionmaker, Session
@@ -7,26 +6,28 @@ from config.settings import DB_URL
 
 
 class DatabaseManager:
-    """Manages database operations with session handling"""
     
     def __init__(self):
-        """Initialize database connection"""
+
         self.engine = create_engine(DB_URL, echo=False)
         self.SessionLocal = sessionmaker(bind=self.engine)
         self._session = None
-    
+        
+        
+# SESSION MANAGEMENT
     def get_session(self) -> Session:
-        """Get or create a session"""
         if self._session is None:
             self._session = self.SessionLocal()
         return self._session
     
     def close_session(self):
-        """Close the current session"""
         if self._session:
             self._session.close()
             self._session = None
-    
+
+
+
+# CONTEXT MANAGEMENT
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope for database operations"""
@@ -40,7 +41,7 @@ class DatabaseManager:
         finally:
             session.close()
     
-    # ==================== TABLE OPERATIONS ====================
+# TABLE OPERATIONS  
     
     def create_tables(self):
         """Create all database tables"""
@@ -52,10 +53,9 @@ class DatabaseManager:
         Base.metadata.drop_all(self.engine)
         print("🗑️  Database tables dropped")
     
-    # ==================== USER OPERATIONS ====================
+# USER OPERATIONS  
     
     def add_user(self, username: str) -> tuple[bool, str]:
-        """Add new user to database"""
         session = self.get_session()
         
         # Check if user already exists
@@ -70,29 +70,25 @@ class DatabaseManager:
         return True, f"User '{username}' created successfully"
     
     def get_user(self, username: str):
-        """Get user by username"""
         session = self.get_session()
         return session.query(User).filter_by(username=username).first()
     
     def get_all_users(self):
-        """Get all users"""
         session = self.get_session()
         return session.query(User).order_by(User.created_at.desc()).all()
     
-    # ==================== REVIEW OPERATIONS ====================
+# REVIEW OPERATIONS  
     
     def add_review(self, username: str, title: str, media_type: str, 
                    rating: float, review_text: str = '') -> tuple[bool, str]:
-        """Add new review"""
+
         session = self.get_session()
         
-        # Check user exists
-        user = session.query(User).filter_by(username=username).first()
+        user = session.query(User).filter_by(username=username).first() #check user exists
         if not user:
             return False, f"User '{username}' not found"
         
-        # Determine if reviewed
-        is_reviewed = len(review_text.strip()) > 0
+        is_reviewed = len(review_text.strip()) > 0 #if there is no review text , it will be false
         
         review = Review(
             user_id=user.user_id,
@@ -118,7 +114,6 @@ class DatabaseManager:
         """
         session = self.get_session()
         
-        # Check user exists
         user = session.query(User).filter_by(username=username).first()
         if not user:
             return False, f"User '{username}' not found"
@@ -140,6 +135,7 @@ class DatabaseManager:
             existing_media.is_reviewed = is_reviewed
             session.commit()
             return True, f"Updated review for '{title}'"
+        
         else:
             # CREATE new entry
             review = Review(
@@ -156,8 +152,8 @@ class DatabaseManager:
             return True, f"Added new review for '{title}'"
     
     def get_all_reviews_grouped(self):
-        """Get all reviews grouped by media type - DB CENTRIC"""
         session = self.get_session()
+        
         movies = session.query(Review).filter_by(media_type='movie').order_by(Review.title).all()
         songs = session.query(Review).filter_by(media_type='song').order_by(Review.title).all()
         webshows = session.query(Review).filter_by(media_type='webshow').order_by(Review.title).all()
@@ -169,16 +165,16 @@ class DatabaseManager:
         }
     
     def search_by_title(self, title: str, media_type: str):
-        """Search reviews by title - DB CENTRIC (ILIKE query)"""
         session = self.get_session()
+        
         return session.query(Review).filter(
             Review.title.ilike(f'%{title}%'),
             Review.media_type == media_type
         ).all()
     
     def get_top_rated(self, media_type: str, limit: int = 5):
-        """Get top-rated media - DB CENTRIC (GROUP BY, AVG, ORDER BY, LIMIT)"""
         session = self.get_session()
+        
         results = session.query(
             Review.title,
             func.avg(Review.rating).label('avg_rating'),
@@ -195,8 +191,8 @@ class DatabaseManager:
         return results
     
     def get_highest_rated_by_user(self, username: str):
-        """Get user's highest-rated review - DB CENTRIC (ORDER BY, LIMIT)"""
         session = self.get_session()
+        
         highest = session.query(Review).filter_by(
             username=username
         ).filter(
@@ -208,20 +204,17 @@ class DatabaseManager:
         
         return highest
     
-    # ==================== STATISTICS ====================
+# STATISTICS  this is optional
     
     def get_stats(self):
-        """Get database statistics"""
         session = self.get_session()
+        
         total_users = session.query(User).count()
         
-        # Total media items (all entries)
         total_media = session.query(Review).count()
+
+        reviewed_media = session.query(Review).filter_by(is_reviewed=True).count() 
         
-        # Reviewed media (only entries with actual reviews)
-        reviewed_media = session.query(Review).filter_by(is_reviewed=True).count()
-        
-        # By media type
         movie_total = session.query(Review).filter_by(media_type='movie').count()
         movie_reviewed = session.query(Review).filter_by(media_type='movie', is_reviewed=True).count()
         

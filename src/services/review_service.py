@@ -6,7 +6,6 @@ from src.patterns.observer import notification_subject
 
 
 class ReviewService:
-    """Handles review operations with caching and threading"""
     
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
@@ -40,30 +39,26 @@ class ReviewService:
             return success, message
     
     def get_top_rated_cached(self, media_type: str, limit: int = 5):
-        """Get top-rated media with caching"""
-        cache_key = f"top_rated:{media_type}:{limit}"
+        cache_key = f"top_rated:{media_type}:{limit}" # Get top-rated media with caching
         
-        # Check cache first
-        cached = cache.get(cache_key)
+        cached = cache.get(cache_key) #Check cache first
         if cached:
             print("   💾 [Cache HIT]")
             return cached
         
-        # Cache miss - query database
-        print("   🔍 [Cache MISS - Querying DB]")
+        print("   🔍 [Cache MISS - Querying DB]")# Cache miss - query database
         results = self.db.get_top_rated(media_type, limit)
         
         # Convert to serializable format
         data = [
             {
-                'title': r.title,
-                'avg_rating': float(r.avg_rating),
-                'review_count': r.review_count
+                'title': x.title,
+                'avg_rating': float(x.avg_rating),
+                'review_count': x.review_count
             }
-            for r in results
+            for x in results
         ]
-        
-        # Store in cache
+
         cache.set(cache_key, data)
         
         return data
