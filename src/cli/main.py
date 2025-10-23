@@ -26,7 +26,6 @@ class MediaReviewCLI:
             self.recommendation_service = None
     
     
-    
 # HELPER FUNCTIONS
 
 # to print header
