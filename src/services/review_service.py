@@ -9,23 +9,19 @@ class ReviewService:
     
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
-        self._lock = threading.Lock()  # Thread safety for concurrent submissions
+        self._lock = threading.Lock()
     
     def add_review_threaded(self, username: str, title: str, media_type: str,
                        rating: float, review_text: str = '') -> tuple[bool, str]:
-
         with self._lock:
-            # Update or create in database
             success, message = self.db.update_or_create_review(
                 username, title, media_type, rating, review_text
             )
             
             if success:
-                # Invalidate cache so that old data is not served
                 cache.clear_pattern(f"top_rated:{media_type}:*")
                 cache.delete(f"reviews:all")
                 
-                # Notify observers with this template
                 notification_subject.notify(
                     f"New review for '{title}' by {username}",
                     {
@@ -39,17 +35,16 @@ class ReviewService:
             return success, message
     
     def get_top_rated_cached(self, media_type: str, limit: int = 5):
-        cache_key = f"top_rated:{media_type}:{limit}" # Get top-rated media with caching
+        cache_key = f"top_rated:{media_type}:{limit}"
         
-        cached = cache.get(cache_key) #Check cache first
+        cached = cache.get(cache_key)
         if cached:
-            print("   💾 [Cache HIT]")
+            print("[CACHE HIT]")
             return cached
         
-        print("   🔍 [Cache MISS - Querying DB]")# Cache miss - query database
+        print("[CACHE MISS - Querying database]")
         results = self.db.get_top_rated(media_type, limit)
         
-        # Convert to serializable format
         data = [
             {
                 'title': x.title,
@@ -60,5 +55,4 @@ class ReviewService:
         ]
 
         cache.set(cache_key, data)
-        
         return data

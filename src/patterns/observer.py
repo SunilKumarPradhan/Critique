@@ -20,11 +20,11 @@ class UserObserver(Observer):
     
     def update(self, message: str, data: Dict[str, Any]):
         """Print notification to console"""
-        print(f"\n🔔 NOTIFICATION for {self.username}: {message}")
+        print(f"\n[NOTIFICATION] {self.username}: {message}")
         if 'title' in data:
-            print(f"   📌 Media: {data['title']}")
+            print(f"  Media: {data['title']}")
         if 'rating' in data:
-            print(f"   ⭐ Rating: {data['rating']}")
+            print(f"  Rating: {data['rating']}")
 
 
 class Subject:
@@ -32,20 +32,13 @@ class Subject:
     
     def __init__(self):
         self._observers: List[Observer] = []
-        self._favorite_media: Dict[str, List[str]] = {}  # media_title -> [usernames]
+        self._favorite_media: Dict[str, List[str]] = {}
     
     def attach(self, observer: Observer, media_title: str = None):
-        """
-        Attach observer to subject
-        
-        Args:
-            observer: Observer to attach
-            media_title: Optional - specific media to watch
-        """
+        """Attach observer to subject"""
         if observer not in self._observers:
             self._observers.append(observer)
         
-        # Track favorites
         if media_title:
             if media_title not in self._favorite_media:
                 self._favorite_media[media_title] = []
@@ -58,21 +51,13 @@ class Subject:
             self._observers.remove(observer)
     
     def notify(self, message: str, data: Dict[str, Any]):
-        """
-        Notify all observers
-        
-        Args:
-            message: Notification message
-            data: Additional data (title, rating, etc.)
-        """
-        # Notify specific users who favorited this media
+        """Notify all observers"""
         if 'title' in data and data['title'] in self._favorite_media:
             for username in self._favorite_media[data['title']]:
                 for observer in self._observers:
                     if observer.username == username:
                         observer.update(message, data)
         else:
-            # Notify all observers
             for observer in self._observers:
                 observer.update(message, data)
     
@@ -81,5 +66,4 @@ class Subject:
         return len(self._observers)
 
 
-# Global notification subject
 notification_subject = Subject()

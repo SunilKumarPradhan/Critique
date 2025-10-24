@@ -1,6 +1,4 @@
-"""Media type classes for Factory Pattern"""
 from abc import ABC, abstractmethod
-
 
 class Media(ABC):
     """Abstract base class for media types"""
@@ -8,11 +6,6 @@ class Media(ABC):
     def __init__(self, title, media_type):
         self.title = title
         self.media_type = media_type
-    
-    @abstractmethod
-    def get_display_icon(self):
-        """Return display icon for media type"""
-        pass
     
     def __repr__(self):
         return f"<{self.__class__.__name__}(title='{self.title}')>"
@@ -23,9 +16,6 @@ class Movie(Media):
     
     def __init__(self, title):
         super().__init__(title, 'movie')
-    
-    def get_display_icon(self):
-        return "🎬"
 
 
 class Song(Media):
@@ -33,9 +23,6 @@ class Song(Media):
     
     def __init__(self, title):
         super().__init__(title, 'song')
-    
-    def get_display_icon(self):
-        return "🎵"
 
 
 class WebShow(Media):
@@ -43,6 +30,3 @@ class WebShow(Media):
     
     def __init__(self, title):
         super().__init__(title, 'webshow')
-    
-    def get_display_icon(self):
-        return "📺"

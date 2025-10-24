@@ -1,10 +1,7 @@
-"""Factory Pattern for creating media objects"""
 from src.models.media_types import Movie, Song, WebShow
-
 
 class MediaFactory:
     """Factory to create different media types"""
-    
     _media_types = {
         'movie': Movie,
         'song': Song,
@@ -38,12 +35,3 @@ class MediaFactory:
     def get_all_types(cls):
         """Get list of all supported media types"""
         return list(cls._media_types.keys())
-    
-    @classmethod
-    def get_icon(cls, media_type):
-        """Get display icon for media type"""
-        try:
-            media = cls.create_media(media_type, "dummy")
-            return media.get_display_icon()
-        except ValueError:
-            return "❓"
