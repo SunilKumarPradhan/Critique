@@ -1,5 +1,4 @@
 import threading
-from tabulate import tabulate
 from src.database.manager import DatabaseManager
 from src.services.review_service import ReviewService
 from src.services.user_service import UserService
@@ -10,6 +9,7 @@ from src.cache.redis_cache import cache
 
 class MediaReviewCLI:
 
+# HELPER FUNCTIONS
     def __init__(self):
         self.db = DatabaseManager()
         self.db.create_tables()
@@ -24,7 +24,7 @@ class MediaReviewCLI:
         print("\n" + "=" * 30)
         print(f"  {text}")
         print("=" * 30)
-
+    
     def media_type_selector(self):
         print("\nSelect media type:")
         types = MediaFactory.get_all_types()
@@ -34,7 +34,9 @@ class MediaReviewCLI:
         choice = input("Enter choice (1-3): ").strip()
         media_map = {'1': 'movie', '2': 'song', '3': 'webshow'}
         return media_map.get(choice)
-    
+
+
+# MAIN MENU
     def main_menu(self):
         while True:
             self.print_header("MEDIA REVIEW SYSTEM")
@@ -67,18 +69,16 @@ class MediaReviewCLI:
     def show_all_reviewers(self):
         self.print_header("ALL REVIEWERS")
         users = self.db.get_all_users()
+        
         if not users:
             print("No reviewers found in the database!")
         else:
-            table_data = [
-                [u.user_id, u.username, u.created_at.strftime('%Y-%m-%d %H:%M')]
-                for u in users
-            ]
-            print(tabulate(table_data,
-                          headers=['ID', 'Username', 'Joined Date'],
-                          tablefmt='grid'))
+            print(f"\n{'ID':<5} {'Username':<20} {'Joined Date':<20}")
+            print("-" * 50)
+            for u in users:
+                print(f"{u.user_id:<5} {u.username:<20} {u.created_at.strftime('%Y-%m-%d %H:%M'):<20}")
             print(f"\nTotal Reviewers: {len(users)}")
-    
+
     def add_new_reviewer(self):
         self.print_header("ADD NEW REVIEWER")
         username = input("Enter username: ").strip()
@@ -127,6 +127,8 @@ class MediaReviewCLI:
             if choice != '7':
                 input("\nPress Enter to continue...")
     
+      
+# submenu functions start from here
     def view_all_media(self):
         self.print_header("ALL MEDIA")
         
@@ -138,17 +140,14 @@ class MediaReviewCLI:
             if reviews:
                 has_data = True
                 print(f"\n{media_type.upper()}S ({len(reviews)} items)")
-                print("-" * 30)
+                print("=" * 30)
+                print(f"{'#':<5} {'Title':<30} {'Rating':<10} {'By':<20}")
+                print("=" * 55)
                 
-                table_data = [
-                    [idx + 1, r.title, 
-                     f"{r.rating:.1f}" if r.rating else "N/A",
-                     r.username]
-                    for idx, r in enumerate(reviews)
-                ]
-                print(tabulate(table_data,
-                              headers=['#', 'Title', 'Rating', 'By'],
-                              tablefmt='simple'))
+                for i, r in enumerate(reviews, 1):
+                    rating = f"{r.rating:.1f}" if r.rating else "N/A"
+                    title = r.title[:28] + ".." if len(r.title) > 30 else r.title
+                    print(f"{i:<5} {title:<30} {rating:<10} {r.username:<20}")
         
         if not has_data:
             print("No media found in the database!")
@@ -230,16 +229,16 @@ class MediaReviewCLI:
         if not results:
             print(f"\nNo {media_type}s found matching '{title}'")
         else:
-            print(f"\nFound {len(results)} result(s):\n")
-            table_data = [
-                [r.title, r.username, 
-                 f"{r.rating:.1f}" if r.rating else "N/A",
-                 (r.review_text[:40] + "...") if len(r.review_text) > 40 else r.review_text or "No review"]
-                for r in results
-            ]
-            print(tabulate(table_data,
-                          headers=['Title', 'Reviewer', 'Rating', 'Review'],
-                          tablefmt='grid'))
+            print(f"\nFound {len(results)} result(s):")
+            print("-" * 80)
+            print(f"{'Title':<25} {'Reviewer':<15} {'Rating':<10} {'Review':<30}")
+            print("-" * 80)
+            
+            for r in results:
+                rating = f"{r.rating:.1f}" if r.rating else "N/A"
+                review = (r.review_text[:27] + "...") if len(r.review_text) > 30 else r.review_text or "No review"
+                title_short = r.title[:23] + ".." if len(r.title) > 25 else r.title
+                print(f"{title_short:<25} {r.username:<15} {rating:<10} {review:<30}")
     
     def get_top_rated(self):
         self.print_header("GET TOP RATED")
@@ -254,14 +253,14 @@ class MediaReviewCLI:
         if not results:
             print(f"\nNo rated {media_type}s found!")
         else:
-            print(f"\nTop {len(results)} {media_type.capitalize()}(s):\n")
-            table_data = [
-                [i+1, r['title'], f"{r['avg_rating']:.2f}", f"{r['review_count']} review(s)"]
-                for i, r in enumerate(results)
-            ]
-            print(tabulate(table_data,
-                          headers=['Rank', 'Title', 'Avg Rating', 'Total Reviews'],
-                          tablefmt='grid'))
+            print(f"\nTop {len(results)} {media_type.capitalize()}(s):")
+            print("-" * 70)
+            print(f"{'Rank':<8} {'Title':<30} {'Avg Rating':<15} {'Reviews':<15}")
+            print("-" * 70)
+            
+            for i, r in enumerate(results, 1):
+                title = r['title'][:28] + ".." if len(r['title']) > 30 else r['title']
+                print(f"{i:<8} {title:<30} {r['avg_rating']:<15.2f} {r['review_count']:<15}")
     
     def get_recommendations(self):
         self.print_header("GET RECOMMENDATIONS")
