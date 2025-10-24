@@ -17,19 +17,14 @@ class MediaReviewCLI:
         self.user_service = UserService(self.db)
         
         print("\nLoading recommendation models...")
-        try:
-            self.recommendation_service = RecommendationService()
-            print("Recommendation system ready\n")
-            
-        except Exception as e:
-            print(f"Recommendation system not available: {e}")
-            self.recommendation_service = None
+        self.recommendation_service = RecommendationService()
+        print("Recommendation system ready\n")
     
     def print_header(self, text):
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 30)
         print(f"  {text}")
-        print("=" * 60)
-    
+        print("=" * 30)
+
     def media_type_selector(self):
         print("\nSelect media type:")
         types = MediaFactory.get_all_types()
@@ -41,35 +36,33 @@ class MediaReviewCLI:
         return media_map.get(choice)
     
     def main_menu(self):
-        try:
-            while True:
-                self.print_header("MEDIA REVIEW SYSTEM")
-                print("1. Show All Reviewers")
-                print("2. Add New Reviewer")
-                print("3. Review & Recommendations Menu")
-                print("4. Show Statistics")
-                print("5. Exit")
-                
-                choice = input("\nEnter your choice (1-5): ").strip()
-                
-                if choice == '1':
-                    self.show_all_reviewers()
-                elif choice == '2':
-                    self.add_new_reviewer()
-                elif choice == '3':
-                    self.review_menu()
-                elif choice == '4':
-                    self.show_statistics()
-                elif choice == '5':
-                    print("\nGoodbye!\n")
-                    break
-                else:
-                    print("[ERROR] Invalid choice!")
-                
-                if choice != '5':
-                    input("\nPress Enter to continue...")
-        finally:
-            self.db.close_session()
+        while True:
+            self.print_header("MEDIA REVIEW SYSTEM")
+            print("1. Show All Reviewers")
+            print("2. Add New Reviewer")
+            print("3. Review & Recommendations Menu")
+            print("4. Show Statistics")
+            print("5. Exit")
+            
+            choice = input("\nEnter your choice (1-5): ").strip()
+            
+            if choice == '1':
+                self.show_all_reviewers()
+            elif choice == '2':
+                self.add_new_reviewer()
+            elif choice == '3':
+                self.review_menu()
+            elif choice == '4':
+                self.show_statistics()
+            elif choice == '5':
+                print("\nGoodbye!\n")
+                self.db.close_session()
+                break
+            else:
+                print("[ERROR] Invalid choice!")
+            
+            if choice != '5':
+                input("\nPress Enter to continue...")
     
     def show_all_reviewers(self):
         self.print_header("ALL REVIEWERS")
@@ -145,17 +138,16 @@ class MediaReviewCLI:
             if reviews:
                 has_data = True
                 print(f"\n{media_type.upper()}S ({len(reviews)} items)")
-                print("-" * 70)
+                print("-" * 30)
                 
                 table_data = [
                     [idx + 1, r.title, 
                      f"{r.rating:.1f}" if r.rating else "N/A",
-                     "Yes" if r.is_reviewed else "No",
                      r.username]
                     for idx, r in enumerate(reviews)
                 ]
                 print(tabulate(table_data,
-                              headers=['#', 'Title', 'Rating','By'],
+                              headers=['#', 'Title', 'Rating', 'By'],
                               tablefmt='simple'))
         
         if not has_data:
@@ -183,39 +175,42 @@ class MediaReviewCLI:
             print("[ERROR] Invalid media type!")
             return
         
+        title = input(f"\nEnter {media_type} title: ").strip()
+        if not title:
+            print("[ERROR] Title cannot be empty!")
+            return
+        
+        media = MediaFactory.create_media(media_type, title)
+        print(f"\nCreating review for: {title}")
+        
+        rating_input = input("Enter rating (1.0 - 5.0): ").strip()
+        
         try:
-            title = input(f"\nEnter {media_type} title: ").strip()
-            if not title:
-                print("[ERROR] Title cannot be empty!")
-                return
-            
-            media = MediaFactory.create_media(media_type, title)
-            print(f"\nCreating review for: {title}")
-            
-            rating = float(input("Enter rating (1.0 - 5.0): ").strip())
-            if rating < 1.0 or rating > 5.0:
-                print("[ERROR] Rating must be between 1.0 and 5.0!")
-                return
-            
-            review_text = input("Enter review text (press Enter to skip): ").strip()
-            
-            print("\nSubmitting review...")
-            
-            def submit_review():
-                success, message = self.review_service.add_review_threaded(
-                    username, title, media_type, rating, review_text
-                )
-                if success:
-                    print(f"[OK] {message}")
-                else:
-                    print(f"[ERROR] {message}")
-            
-            thread = threading.Thread(target=submit_review)
-            thread.start()
-            thread.join()
-            
-        except ValueError as e:
-            print(f"[ERROR] {e}")
+            rating = float(rating_input)
+        except ValueError:
+            print("[ERROR] Rating must be a number!")
+            return
+        
+        if rating < 1.0 or rating > 5.0:
+            print("[ERROR] Rating must be between 1.0 and 5.0!")
+            return
+        
+        review_text = input("Enter review text (press Enter to skip): ").strip()
+        
+        print("\nSubmitting review...")
+        
+        def submit_review():
+            success, message = self.review_service.add_review_threaded(
+                username, title, media_type, rating, review_text
+            )
+            if success:
+                print(f"[OK] {message}")
+            else:
+                print(f"[ERROR] {message}")
+        
+        thread = threading.Thread(target=submit_review)
+        thread.start()
+        thread.join()
     
     def search_by_title(self):
         self.print_header("SEARCH BY TITLE")
@@ -238,7 +233,7 @@ class MediaReviewCLI:
             print(f"\nFound {len(results)} result(s):\n")
             table_data = [
                 [r.title, r.username, 
-                 f"{r.rating:.1f}" if r.rating else "Not Rated",
+                 f"{r.rating:.1f}" if r.rating else "N/A",
                  (r.review_text[:40] + "...") if len(r.review_text) > 40 else r.review_text or "No review"]
                 for r in results
             ]
@@ -302,7 +297,6 @@ class MediaReviewCLI:
         if not recommendations:
             print("\nNo recommendations available. Try reviewing more items!")
     
-    # uses_service function calls for subscriptions
     def subscribe_to_media(self):
         self.print_header("SUBSCRIBE TO NOTIFICATIONS")
         
