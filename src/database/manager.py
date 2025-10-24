@@ -30,7 +30,7 @@ class DatabaseManager:
 # CONTEXT MANAGEMENT
     @contextmanager
     def session_scope(self):
-        """Provide a transactional scope for database operations"""
+
         session = self.SessionLocal()
         try:
             yield session
@@ -44,12 +44,10 @@ class DatabaseManager:
 # TABLE OPERATIONS  
     
     def create_tables(self):
-        """Create all database tables"""
         Base.metadata.create_all(self.engine)
         print("✅ Database tables created")
     
     def drop_tables(self):
-        """Drop all database tables"""
         Base.metadata.drop_all(self.engine)
         print("🗑️  Database tables dropped")
     
@@ -103,15 +101,10 @@ class DatabaseManager:
         session.commit()
         
         return True, f"Review added for '{title}'"
+        # it will return a tuple of bool and string message
     
     def update_or_create_review(self, username: str, title: str, media_type: str,
                                 rating: float, review_text: str = '') -> tuple[bool, str]:
-        """
-        Update existing media entry OR create new one
-        
-        - If media exists (by title + type), UPDATE it with user's review
-        - If media doesn't exist, CREATE new entry
-        """
         session = self.get_session()
         
         user = session.query(User).filter_by(username=username).first()
@@ -149,7 +142,8 @@ class DatabaseManager:
             )
             session.add(review)
             session.commit()
-            return True, f"Added new review for '{title}'"
+            return True , f"Added new review for '{title}'"
+        # it will return a tuple of bool and string message
     
     def get_all_reviews_grouped(self):
         session = self.get_session()

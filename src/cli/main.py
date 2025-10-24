@@ -78,9 +78,10 @@ class MediaReviewCLI:
             self.db.close_session()
     
 # OPTION 1: Show All Reviewers 
-    
+## calls db manager to get all users   
     def show_all_reviewers(self):
         self.print_header("👥 ALL REVIEWERS")
+        
         users = self.db.get_all_users()
         if not users:
             print("⚠️  No reviewers found in the database!")
@@ -95,6 +96,7 @@ class MediaReviewCLI:
             print(f"\nTotal Reviewers: {len(users)}")
     
 # OPTION 2: Add New Reviewer 
+## User service is called --> service then calls db manager
     
     def add_new_reviewer(self):
         self.print_header("➕ ADD NEW REVIEWER")    # remember this technique its cool
@@ -114,7 +116,6 @@ class MediaReviewCLI:
 # OPTION 3: Review Menu 
     
     def review_menu(self):
-        """Opens Review & Recommendations submenu"""
         while True:
             self.print_header("📝 REVIEW & RECOMMENDATIONS")
             print("1. 📋 View All Media")
@@ -147,10 +148,9 @@ class MediaReviewCLI:
             if choice != '7':
                 input("\nPress Enter to continue...")
     
-# REVIEW SUBMENU OPTIONS 
+# REVIEW SUBMENU OPTIONS : After choose option 3 from main menu
     
     def view_all_media(self):
-        """Show all media grouped by type"""
         self.print_header("📋 ALL MEDIA")
         
         grouped = self.db.get_all_reviews_grouped()
@@ -165,11 +165,11 @@ class MediaReviewCLI:
                 print("-" * 70)
                 
                 table_data = [
-                    [idx + 1, r.title, 
+                    [i + 1, r.title, 
                      f"{r.rating:.1f}⭐" if r.rating else "Not Rated",
                      "✅" if r.is_reviewed else "❌",
                      r.username]
-                    for idx, r in enumerate(reviews)
+                    for i, r in enumerate(reviews)
                 ]
                 print(tabulate(table_data,
                               headers=['#', 'Title', 'Rating', 'Reviewed', 'By'],
@@ -177,12 +177,13 @@ class MediaReviewCLI:
         
         if not has_data:
             print("⚠️  No media found in the database!")
-    
+            
+            
+            
+# Step 1: Username   
     def add_new_review(self):
-        """Add new review with multithreading support"""
         self.print_header("➕ ADD NEW REVIEW")
         
-    # Step 1: Username
         username = input("Enter your username: ").strip()
         if not username:
             print("❌ Username cannot be empty!")
@@ -278,7 +279,6 @@ class MediaReviewCLI:
                           tablefmt='grid'))
     
     def get_top_rated(self):
-        """Get top-rated (DB-centric with caching)"""
         self.print_header("⭐ GET TOP RATED")
         
     # Select media type

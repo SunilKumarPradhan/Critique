@@ -44,8 +44,6 @@ class RedisCache:
         self.client.flushdb()
         print("✅ Cache cleared")
 
-
-# Global cache instance
 cache = RedisCache()
 
 '''
@@ -59,6 +57,4 @@ NOTE:
 4. The global `cache` instance can be imported and used throughout the application for caching needs.
 
 5. Each method checks if the Redis server is available before performing operations, ensuring robustness.
-
-
 '''

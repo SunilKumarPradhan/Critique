@@ -21,11 +21,11 @@ class ReviewService:
             )
             
             if success:
-                # Invalidate cache
+                # Invalidate cache so that old data is not served
                 cache.clear_pattern(f"top_rated:{media_type}:*")
                 cache.delete(f"reviews:all")
                 
-                # Notify observers
+                # Notify observers with this template
                 notification_subject.notify(
                     f"New review for '{title}' by {username}",
                     {
