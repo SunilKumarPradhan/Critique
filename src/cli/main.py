@@ -302,6 +302,7 @@ class MediaReviewCLI:
         if not recommendations:
             print("\nNo recommendations available. Try reviewing more items!")
     
+    # uses_service function calls for subscriptions
     def subscribe_to_media(self):
         self.print_header("SUBSCRIBE TO NOTIFICATIONS")
         
@@ -321,7 +322,7 @@ class MediaReviewCLI:
             print(f"[OK] {message}")
         else:
             print(f"[WARNING] {message}")
-    
+
     def show_statistics(self):
         self.print_header("DATABASE STATISTICS")
         
