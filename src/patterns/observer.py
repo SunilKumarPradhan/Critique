@@ -28,7 +28,6 @@ class Subject:
         self._favorite_media: Dict[str, List[str]] = {}
     
     def attach(self, observer: Observer, media_title: str = None):
-        """Attach observer to subject"""
         if observer not in self._observers:
             self._observers.append(observer)
         

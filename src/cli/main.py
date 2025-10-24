@@ -230,14 +230,14 @@ class MediaReviewCLI:
             print(f"\nNo {media_type}s found matching '{title}'")
         else:
             print(f"\nFound {len(results)} result(s):")
-            print("-" * 80)
+            print("-" * 60)
             print(f"{'Title':<25} {'Reviewer':<15} {'Rating':<10} {'Review':<30}")
-            print("-" * 80)
-            
+            print("-" * 60)
+
             for r in results:
                 rating = f"{r.rating:.1f}" if r.rating else "N/A"
-                review = (r.review_text[:27] + "...") if len(r.review_text) > 30 else r.review_text or "No review"
-                title_short = r.title[:23] + ".." if len(r.title) > 25 else r.title
+                review = (r.review_text[:20] + "...") if len(r.review_text) > 30 else r.review_text or "N/A"
+                title_short = r.title[:20] + ".." if len(r.title) > 25 else r.title
                 print(f"{title_short:<25} {r.username:<15} {rating:<10} {review:<30}")
     
     def get_top_rated(self):
@@ -254,9 +254,9 @@ class MediaReviewCLI:
             print(f"\nNo rated {media_type}s found!")
         else:
             print(f"\nTop {len(results)} {media_type.capitalize()}(s):")
-            print("-" * 70)
+            print("-" * 30)
             print(f"{'Rank':<8} {'Title':<30} {'Avg Rating':<15} {'Reviews':<15}")
-            print("-" * 70)
+            print("-" * 60)
             
             for i, r in enumerate(results, 1):
                 title = r['title'][:28] + ".." if len(r['title']) > 30 else r['title']
