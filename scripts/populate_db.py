@@ -177,19 +177,6 @@ def populate_from_csv():
     print(f"   Total items:      {stats['songs'] + stats['movies'] + stats['webshows']}")
     print(f"   Errors:           {stats['errors']}")
 
-    # Get final database stats
-    db_stats = db.get_stats()
-    print(f"\n📈 DATABASE STATS")
-    print(f"   Total Users:      {db_stats['users']}")
-    print(f"   Total Media:      {db_stats['total_media']}")  # CHANGED
-    print(f"   Reviewed Media:   {db_stats['reviewed_media']}")  # CHANGED
-    print(f"   - Songs:          {db_stats['songs']['total']} total, "
-        f"{db_stats['songs']['reviewed']} reviewed")  # CHANGED
-    print(f"   - Movies:         {db_stats['movies']['total']} total, "
-        f"{db_stats['movies']['reviewed']} reviewed")  # CHANGED
-    print(f"   - Web Shows:      {db_stats['webshows']['total']} total, "
-        f"{db_stats['webshows']['reviewed']} reviewed")  # CHANGED
-    print("=" * 70)
     print("✅ Database population complete!\n")
 
 if __name__ == "__main__":

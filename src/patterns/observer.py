@@ -1,58 +1,88 @@
-"""Observer Pattern for review notifications"""
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+"""Observer Pattern - Notification System"""
+from typing import Dict, Set, Any
 
 
-class Observer(ABC):
+class Observer:
+    """Base observer interface"""
     
-    @abstractmethod
     def update(self, message: str, data: Dict[str, Any]):
+        """Called when notification is triggered"""
         pass
 
 
-class UserObserver(Observer):
-    def __init__(self, username: str):
+class MediaObserver(Observer):
+    """Observer for media-specific notifications"""
+    
+    def __init__(self, username: str, media_title: str):
         self.username = username
+        self.media_title = media_title
     
     def update(self, message: str, data: Dict[str, Any]):
-        print(f"\n[NOTIFICATION] {self.username}: {message}")
-        if 'title' in data:
-            print(f"  Media: {data['title']}")
-        if 'rating' in data:
-            print(f"  Rating: {data['rating']}")
+        """Display notification when subscribed media is reviewed"""
+        # Check if this notification is for the subscribed media
+        if data.get('title', '').lower() == self.media_title.lower():
+            # Don't notify if the reviewer is the subscriber themselves
+            if data.get('username') != self.username:
+                print(f"\n[NOTIFICATION] For {self.username}: A review has been added for '{data['title']}'")
+                print(f"               Reviewer: {data['username']} | Rating: {data['rating']:.1f}/5.0\n")
 
 
-class Subject:    
+class NotificationSubject:
+    """Subject that manages observers and sends notifications"""
+    
     def __init__(self):
-        self._observers: List[Observer] = []
-        self._favorite_media: Dict[str, List[str]] = {}
+        self._observers: Set[Observer] = set()
+        # Track subscriptions: {username: {media_title: observer}}
+        self._subscriptions: Dict[str, Dict[str, MediaObserver]] = {}
     
-    def attach(self, observer: Observer, media_title: str = None):
-        if observer not in self._observers:
-            self._observers.append(observer)
+    def subscribe(self, username: str, media_title: str) -> bool:
+        """Subscribe a user to notifications for a specific media"""
+        if username not in self._subscriptions:
+            self._subscriptions[username] = {}
         
-        if media_title:
-            if media_title not in self._favorite_media:
-                self._favorite_media[media_title] = []
-            if observer.username not in self._favorite_media[media_title]:
-                self._favorite_media[media_title].append(observer.username)
+        # Check if already subscribed
+        if media_title.lower() in [title.lower() for title in self._subscriptions[username].keys()]:
+            return False
+        
+        # Create observer
+        observer = MediaObserver(username, media_title)
+        self._subscriptions[username][media_title] = observer
+        self._observers.add(observer)
+        
+        return True
     
-    def detach(self, observer: Observer):
-        if observer in self._observers:
-            self._observers.remove(observer)
+    def unsubscribe(self, username: str, media_title: str) -> bool:
+        """Unsubscribe a user from notifications for a specific media"""
+        if username not in self._subscriptions:
+            return False
+        
+        # Find matching subscription (case-insensitive)
+        for title, observer in list(self._subscriptions[username].items()):
+            if title.lower() == media_title.lower():
+                self._observers.discard(observer)
+                del self._subscriptions[username][title]
+                return True
+        
+        return False
+    
+    def get_user_subscriptions(self, username: str) -> list:
+        """Get all media titles a user is subscribed to"""
+        if username not in self._subscriptions:
+            return []
+        return list(self._subscriptions[username].keys())
     
     def notify(self, message: str, data: Dict[str, Any]):
-        if 'title' in data and data['title'] in self._favorite_media:
-            for username in self._favorite_media[data['title']]:
-                for observer in self._observers:
-                    if observer.username == username:
-                        observer.update(message, data)
-        else:
-            for observer in self._observers:
-                observer.update(message, data)
+        """Notify all observers"""
+        for observer in self._observers:
+            observer.update(message, data)
     
-    def get_observers_count(self):
-        return len(self._observers)
+    def clear_user_subscriptions(self, username: str):
+        """Clear all subscriptions for a user"""
+        if username in self._subscriptions:
+            for observer in self._subscriptions[username].values():
+                self._observers.discard(observer)
+            del self._subscriptions[username]
 
 
-notification_subject = Subject()
+# Global notification subject instance
+notification_subject = NotificationSubject()

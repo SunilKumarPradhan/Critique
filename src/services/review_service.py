@@ -1,9 +1,10 @@
+import json
 import threading
 from typing import Dict, Any
 from src.database.manager import DatabaseManager
 from src.cache.redis_cache import cache
 from src.patterns.observer import notification_subject
-
+from concurrent.futures import ThreadPoolExecutor
 
 class ReviewService:
     
@@ -56,3 +57,37 @@ class ReviewService:
 
         cache.set(cache_key, data)
         return data
+    
+    
+    
+    def bulk_import_reviews(self, json_path: str) -> dict:
+        results = {'total': 0, 'success': 0, 'failed': 0}
+        
+        with open(json_path, 'r') as f:
+            reviews = json.load(f)
+        
+        results['total'] = len(reviews)
+        
+        def process(review):
+            try:
+                if not self.db.get_user(review['username']):
+                    self.db.add_user(review['username'])
+                
+                return self.add_review_threaded(
+                    review['username'],
+                    review['title'],
+                    review['media_type'],
+                    review['rating'],
+                    review['review_text']
+                )[0]
+            except:
+                return False
+        
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            for success in executor.map(process, reviews):
+                if success:
+                    results['success'] += 1
+                else:
+                    results['failed'] += 1
+        
+        return results
