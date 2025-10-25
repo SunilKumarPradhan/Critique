@@ -1,5 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
 venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Model files and large data
+*.pkl
+*.model
+*.h5
 pickles/
-pickles/movie_model.pkl
-pickles/series_model.pkl
-pickles/song_model.pkl
+models/
+*.csv
+*.json
+
+# Logs
+*.log
+logs/
