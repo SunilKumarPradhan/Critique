@@ -1,2 +1,5 @@
 venv/
 pickles/
+pickles/movie_model.pkl
+pickles/series_model.pkl
+pickles/song_model.pkl
