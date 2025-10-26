@@ -177,6 +177,7 @@ def populate_from_csv():
     print(f"   Total items:      {stats['songs'] + stats['movies'] + stats['webshows']}")
     print(f"   Errors:           {stats['errors']}")
 
+    
     print("✅ Database population complete!\n")
 
 if __name__ == "__main__":

@@ -270,9 +270,12 @@ class MediaReviewCLI:
             print("\n  [ERROR] Title cannot be empty!")
             return
         
-        existing_count = self.db.get_media_review_count(title, media_type)
-        if existing_count > 0:
-            print(f"\n  This {media_type} has {existing_count} existing review(s)")
+        existing_reviews = self.db.get_reviews_by_media(title, media_type)
+        if existing_reviews:
+            print(f"\n  This {media_type} has {len(existing_reviews)} existing review(s):")
+            print("\n  Existing ratings:")
+            for rev in existing_reviews:
+                print(f"    - {rev.username}: {rev.rating}/5.0")
         
         rating_input = input("\n  Enter rating (1.0 - 5.0): ").strip()
         

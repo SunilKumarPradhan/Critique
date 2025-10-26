@@ -12,12 +12,13 @@ class ReviewService:
         self.db = db_manager
         self._lock = threading.Lock()
     
-    def add_review_threaded(self, username: str, title: str, media_type: str,
+    def add_review_threaded(self, username: str, title: str, media_type: str, 
                        rating: float, review_text: str = '') -> tuple[bool, str]:
-        with self._lock:
-            success, message = self.db.update_or_create_review(
-                username, title, media_type, rating, review_text
-            )
+            # Check if review already exists
+            with self._lock:
+                success, message = self.db.add_review(
+                    username, title, media_type, rating, review_text
+                )
             
             if success:
                 cache.clear_pattern(f"top_rated:{media_type}:*")
