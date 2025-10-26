@@ -32,14 +32,10 @@ class DatabaseManager:
             raise e
         finally:
             session.close()
-    
+    # DB Tables
     def create_tables(self):
         Base.metadata.create_all(self.engine)
         print("✅ Database tables created successfully")
-    
-    def drop_tables(self):
-        Base.metadata.drop_all(self.engine)
-        print("🗑️  All database tables dropped")
       
     def add_user(self, username: str) -> tuple[bool, str]:
         session = self.get_session()
@@ -54,6 +50,8 @@ class DatabaseManager:
         
         return True, f"User '{username}' created successfully"
     
+    
+    #User Tables
     def get_user(self, username: str) -> User:
         session = self.get_session()
         return session.query(User).filter_by(username=username).first()
@@ -61,17 +59,6 @@ class DatabaseManager:
     def get_all_users(self) -> list[User]:
         session = self.get_session()
         return session.query(User).order_by(User.created_at.desc()).all()
-    
-    def delete_user(self, username: str) -> tuple[bool, str]:
-        session = self.get_session()
-        user = session.query(User).filter_by(username=username).first()
-        if not user:
-            return False, f"User '{username}' not found"
-        
-        session.delete(user)
-        session.commit()
-        
-        return True, f"User '{username}' and all their reviews deleted"
     
     def get_or_create_media(self, title: str, media_type: str) -> Media:
         session = self.get_session()
@@ -87,17 +74,9 @@ class DatabaseManager:
             session.commit()
         
         return media
-    
-    def get_media_by_title(self, title: str, media_type: str) -> Media:
-        session = self.get_session()
-        return session.query(Media).filter_by(
-            title=title,
-            media_type=media_type
-        ).first()
        
     def add_review(self, username: str, title: str, media_type: str, 
                    rating: float, review_text: str = '') -> tuple[bool, str]:
-
         session = self.get_session()
         
         user = session.query(User).filter_by(username=username).first()
@@ -118,10 +97,6 @@ class DatabaseManager:
         
         return True, f"Review added for '{title}'"
     
-    def get_all_media(self) -> list[Media]:
-        session = self.get_session()
-        return session.query(Media).order_by(Media.created_at.desc()).all()
-    
     def get_all_media_grouped(self) -> dict:
         session = self.get_session()
         
@@ -135,32 +110,6 @@ class DatabaseManager:
             'webshow': webshows
         }
     
-    def get_all_reviews(self) -> list[Review]:
-        session = self.get_session()
-        return session.query(Review).order_by(Review.created_at.desc()).all()
-    
-    def get_reviews_by_media(self, title: str, media_type: str) -> list[Review]:
-        session = self.get_session()
-        
-        media = session.query(Media).filter_by(
-            title=title,
-            media_type=media_type
-        ).first()
-        
-        if not media:
-            return []
-        
-        return session.query(Review).filter_by(
-            media_id=media.media_id
-        ).order_by(Review.created_at.desc()).all()
-    
-    def get_reviews_by_user(self, username: str) -> list[Review]:
-        session = self.get_session()
-        
-        return session.query(Review).join(User).filter(
-            User.username == username
-        ).order_by(Review.created_at.desc()).all()
-    
     def search_by_title(self, title: str, media_type: str) -> list[Media]:
         session = self.get_session()
         
@@ -168,18 +117,6 @@ class DatabaseManager:
             Media.title.ilike(f'%{title}%'),
             Media.media_type == media_type
         ).order_by(Media.title).all()
-    
-    def delete_review(self, review_id: int) -> tuple[bool, str]:
-        session = self.get_session()
-        
-        review = session.query(Review).filter_by(review_id=review_id).first()
-        if not review:
-            return False, f"Review ID {review_id} not found"
-        
-        session.delete(review)
-        session.commit()
-        
-        return True, f"Review deleted successfully"
 
     def get_top_rated(self, media_type: str, limit: int = 5) -> list:
         session = self.get_session()
@@ -243,19 +180,6 @@ class DatabaseManager:
             User.username == username
         ).count()
     
-    def get_media_review_count(self, title: str, media_type: str) -> int:
-        session = self.get_session()
-        
-        media = session.query(Media).filter_by(
-            title=title,
-            media_type=media_type
-        ).first()
-        
-        if not media:
-            return 0
-        
-        return session.query(Review).filter_by(media_id=media.media_id).count()
-    
     def get_media_stats(self, media: Media) -> dict:
         session = self.get_session()
         
@@ -270,7 +194,7 @@ class DatabaseManager:
             'avg_rating': sum(r.rating for r in rated_reviews) / len(rated_reviews) if rated_reviews else 0.0
         }
     
-    # FAVORITE METHODS
+    # FAVORITES
     def add_favorite(self, username: str, title: str, media_type: str) -> tuple[bool, str]:
         session = self.get_session()
         

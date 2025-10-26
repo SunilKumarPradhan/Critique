@@ -6,6 +6,8 @@ from src.services.recommendation_service import RecommendationService
 
 
 class MediaReviewCLI:
+    
+    #HELPER
     def __init__(self):
         self.db = DatabaseManager()
         self.db.create_tables()
@@ -37,7 +39,8 @@ class MediaReviewCLI:
             notification_subject.register_observer(user.username)
         if users:
             print(f"✅ Registered {len(users)} users for notifications")
-            
+           
+    #MENU 
     def main_menu(self):
         while True:
             self.print_header("MEDIA REVIEW SYSTEM")
@@ -82,6 +85,7 @@ class MediaReviewCLI:
             if choice != '10':
                 input("\n  Press Enter to continue...")
 
+    #REVIEW
     def show_all_reviewers(self):
         self.print_header("ALL REVIEWERS")
         users = self.db.get_all_users()
@@ -96,7 +100,7 @@ class MediaReviewCLI:
             review_count = self.db.get_user_review_count(u.username)
             fav_count = len(self.user_service.get_favorites(u.username))
             print(f"  {u.username:<20} {review_count:<15} {fav_count:<15}")
-
+            
     def add_new_reviewer(self):
         self.print_header("ADD NEW REVIEWER")
         username = input("\n  Enter username: ").strip()
@@ -155,6 +159,8 @@ class MediaReviewCLI:
         thread.start()
         thread.join()
 
+
+    #MEDIA
     def view_all_media(self):
         self.print_header("ALL MEDIA ITEMS")
         grouped = self.db.get_all_media_grouped()
@@ -252,6 +258,8 @@ class MediaReviewCLI:
         else:
             print(f"  [INFO] No recommendations available.")
 
+
+    #FAVOURITE
     def add_to_favorites(self):
         self.print_header("ADD TO FAVORITES")
         
