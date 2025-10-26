@@ -6,6 +6,7 @@ from src.cache.redis_cache import cache
 from src.patterns.observer import notification_subject
 from concurrent.futures import ThreadPoolExecutor
 
+
 class ReviewService:
     
     def __init__(self, db_manager: DatabaseManager):
@@ -14,17 +15,24 @@ class ReviewService:
     
     def add_review_threaded(self, username: str, title: str, media_type: str, 
                        rating: float, review_text: str = '') -> tuple[bool, str]:
-            # Check if review already exists
-            with self._lock:
-                success, message = self.db.add_review(
-                    username, title, media_type, rating, review_text
-                )
+        """Add review with thread safety"""
+        with self._lock:
+            success, message = self.db.add_review(
+                username, title, media_type, rating, review_text
+            )
+        
+        if success:
+            # Clear cache
+            cache.clear_pattern(f"top_rated:{media_type}:*")
+            cache.delete(f"reviews:all")
             
-            if success:
-                cache.clear_pattern(f"top_rated:{media_type}:*")
-                cache.delete(f"reviews:all")
-                
-                notification_subject.notify(
+            # Notify users who have this media in favorites
+            users_to_notify = self.db.get_users_who_favorited(title, media_type)
+            
+            if users_to_notify:
+                print()  # Add blank line before notifications
+                notification_subject.notify_users(
+                    users_to_notify,
                     f"New review for '{title}' by {username}",
                     {
                         'title': title,
@@ -33,10 +41,11 @@ class ReviewService:
                         'username': username
                     }
                 )
-            
-            return success, message
+        
+        return success, message
     
     def get_top_rated_cached(self, media_type: str, limit: int = 5):
+        """Get top rated media with caching"""
         cache_key = f"top_rated:{media_type}:{limit}"
         
         cached = cache.get(cache_key)
@@ -59,9 +68,8 @@ class ReviewService:
         cache.set(cache_key, data)
         return data
     
-    
-    
     def bulk_import_reviews(self, json_path: str) -> dict:
+        """Import reviews in bulk using multithreading"""
         results = {'total': 0, 'success': 0, 'failed': 0}
         
         with open(json_path, 'r') as f:
@@ -79,7 +87,7 @@ class ReviewService:
                     review['title'],
                     review['media_type'],
                     review['rating'],
-                    review['review_text']
+                    review.get('review_text', '')
                 )[0]
             except:
                 return False
