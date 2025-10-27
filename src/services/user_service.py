@@ -1,4 +1,3 @@
-"""User Service - Simplified"""
 from src.database.manager import DatabaseManager
 from src.patterns.observer import notification_subject
 

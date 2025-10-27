@@ -1,4 +1,3 @@
-"""Recommendation service for all media types"""
 import pickle
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -6,7 +5,6 @@ from config.settings import SONG_MODEL, MOVIE_MODEL, SERIES_MODEL
 
 
 class RecommendationService:
-    """Unified recommendation service for movies, songs, and web series"""
     
     def __init__(self):
         self.movie_model = None
